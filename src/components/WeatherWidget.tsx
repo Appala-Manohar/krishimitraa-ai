@@ -1,91 +1,45 @@
-import { useEffect, useState } from "react";
-import { MapPin, Droplets, Wind, AlertCircle, CloudSun } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Sun, Cloud, Rain, MapPin, Droplets, Wind } from "lucide-react";
 
-interface WeatherData {
-  temp: number;
-  humidity: number;
-  windSpeed: number;
-  condition: string;
-}
-
-export function WeatherWidget() {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>("");
-
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser");
-      setLoading(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const res = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m`
-          );
-          const data = await res.json();
-
-          setWeather({
-            temp: Math.round(data.current.temperature_2m),
-            humidity: data.current.relative_humidity_2m,
-            windSpeed: data.current.wind_speed_10m,
-            condition: "Live Field Conditions",
-          });
-        } catch (err) {
-          setError("Failed to fetch live weather data.");
-        } finally {
-          setLoading(false);
-        }
-      },
-      () => {
-        setError("Please enable GPS/Location access for accurate live farm weather.");
-        setLoading(false);
-      }
-    );
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="p-6 bg-green-800 text-white rounded-3xl animate-pulse flex items-center justify-between">
-        <div className="text-lg">Fetching live GPS weather for your farm...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl flex items-center gap-2">
-        <AlertCircle size={20} />
-        <span className="text-sm">{error}</span>
-      </div>
-    );
-  }
+export default function WeatherWidget() {
+  const [weather, setWeather] = useState({
+    temp: "31°C",
+    condition: "పాక్షికంగా మేఘావృతం",
+    humidity: "68%",
+    wind: "12 km/h",
+    location: "తెలంగాణ",
+  });
 
   return (
-    <div className="bg-gradient-to-br from-green-700 via-emerald-700 to-teal-800 text-white p-6 rounded-3xl shadow-xl flex justify-between items-center">
-      <div>
-        <div className="flex items-center gap-2 text-green-100 text-sm">
-          <MapPin size={16} />
-          <span>Live GPS Location</span>
+    <div className="bg-gradient-to-br from-emerald-800 to-teal-900 text-white rounded-3xl p-6 shadow-xl border border-emerald-700/50">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 text-emerald-200">
+          <MapPin size={18} />
+          <span className="font-semibold text-sm">{weather.location}</span>
         </div>
-        <div className="text-5xl font-extrabold mt-2">{weather?.temp}°C</div>
-        <p className="text-green-100 text-sm mt-1">{weather?.condition}</p>
+        <span className="text-xs bg-emerald-700/50 px-3 py-1 rounded-full border border-emerald-500/30 font-medium">
+          లైవ్ అప్‌డేట్
+        </span>
       </div>
 
-      <div className="flex gap-6 text-right">
-        <div className="flex flex-col items-center">
-          <Droplets size={22} className="text-blue-200" />
-          <span className="text-xs text-green-100 mt-1">Humidity</span>
-          <span className="font-bold text-base">{weather?.humidity}%</span>
+      <div className="flex items-center justify-between my-2">
+        <div>
+          <h3 className="text-4xl font-extrabold tracking-tight">{weather.temp}</h3>
+          <p className="text-xs text-emerald-100/80 mt-1 font-medium">{weather.condition}</p>
         </div>
-        <div className="flex flex-col items-center">
-          <Wind size={22} className="text-teal-200" />
-          <span className="text-xs text-green-100 mt-1">Wind</span>
-          <span className="font-bold text-base">{weather?.windSpeed} km/h</span>
+        <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md">
+          <Sun size={36} className="text-amber-300 animate-pulse" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-emerald-700/60 text-xs">
+        <div className="flex items-center gap-2 text-emerald-100">
+          <Droplets size={16} className="text-emerald-300" />
+          <span>తేమ: <strong className="text-white">{weather.humidity}</strong></span>
+        </div>
+        <div className="flex items-center gap-2 text-emerald-100">
+          <Wind size={16} className="text-emerald-300" />
+          <span>గాలి వేగం: <strong className="text-white">{weather.wind}</strong></span>
         </div>
       </div>
     </div>

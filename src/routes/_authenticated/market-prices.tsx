@@ -1,87 +1,79 @@
 import { useState } from "react";
-import { TrendingUp, Search, RefreshCw, ArrowUpRight, ArrowDownRight, MapPin } from "lucide-react";
-
-interface CommodityPrice {
-  id: number;
-  cropName: string;
-  teluguName: string;
-  mandi: string;
-  pricePerQuintal: number;
-  change: number; // percentage or amount change
-  isUp: boolean;
-}
+import { TrendingUp, Search, MapPin, Tag } from "lucide-react";
 
 export default function MarketPrices() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedState, setSelectedState] = useState("Telangana");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const marketData: CommodityPrice[] = [
-    { id: 1, cropName: "Paddy (Common)", teluguName: "వరి", mandi: "Khammam Mandi", pricePerQuintal: 2320, change: 15, isUp: true },
-    { id: 2, cropName: "Chilli (Teja)", teluguName: "మిరప (తేజ)", mandi: "Khammam Market", pricePerQuintal: 18500, change: -120, isUp: false },
-    { id: 3, cropName: "Cotton", teluguName: "పత్తి", mandi: "Warangal Mandi", pricePerQuintal: 7450, change: 80, isUp: true },
-    { id: 4, cropName: "Maize", teluguName: "మొక్కజొన్న", mandi: "Nizamabad Mandi", pricePerQuintal: 2150, change: -10, isUp: false },
-    { id: 5, cropName: "Groundnut", teluguName: "వేరుశనగ", mandi: "Mahabubnagar", pricePerQuintal: 6800, change: 45, isUp: true },
-    { id: 6, cropName: "Red Gram (Toor)", teluguName: "కందులు", mandi: "Tandur Market", pricePerQuintal: 10250, change: 110, isUp: true },
+  const marketData = [
+    { id: 1, crop: "వరి (Paddy)", price: "₹2,203 / క్వింటాల్", change: "+₹45", location: "ఖమ్మం మార్కెట్", status: "up" },
+    { id: 2, crop: "పత్తి (Cotton)", price: "₹7,100 / క్వింటాల్", change: "+₹120", location: "వరంగల్ మార్కెట్", status: "up" },
+    { id: 3, crop: "మిర్చి (Chilli)", price: "₹18,500 / క్వింటాల్", change: "-₹200", location: "ఖమ్మం మార్కెట్", status: "down" },
+    { id: 4, crop: "మొక్కజొన్న (Maize)", price: "₹2,050 / క్వింటాల్", change: "+₹15", location: "నిజామాబాద్ మార్కెట్", status: "up" },
+    { id: 5, crop: "కందులు (Red Gram)", price: "₹10,250 / క్వింటాల్", change: "+₹80", location: "తండూర్ మార్కెట్", status: "up" },
   ];
 
-  const filteredData = marketData.filter(
-    (item) =>
-      item.cropName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.teluguName.includes(searchTerm) ||
-      item.mandi.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredData = marketData.filter((item) =>
+    item.crop.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="p-6 max-w-6xl mx-auto font-sans space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+    <div className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <TrendingUp className="text-emerald-600" size={24} />
-            Mandi Market Prices (మార్కెట్ ధరలు)
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <TrendingUp className="text-emerald-700" size={26} />
+            ప్రత్యక్ష మార్కెట్ ధరలు (Live Mandi Prices)
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Real-time daily commodity market rates across major agricultural markets.
+            తెలంగాణలోని వివిధ మార్కెట్ యార్డుల తాజా పంట ధరల వివరాలు.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-3 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search crop or mandi..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-emerald-500 transition"
-            />
-          </div>
+        {/* Search Bar */}
+        <div className="relative flex items-center w-full sm:w-72">
+          <input
+            type="text"
+            placeholder="పంట లేదా మార్కెట్ వెతకండి..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-emerald-600 focus:bg-white transition"
+          />
+          <Search size={16} className="absolute left-3 text-slate-400" />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* Prices Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredData.map((item) => (
-          <div key={item.id} className="bg-white border border-slate-200/80 p-5 rounded-3xl shadow-2xs hover:shadow-md transition">
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <h3 className="text-base font-bold text-slate-800">{item.cropName}</h3>
-                <p className="text-xs font-semibold text-emerald-700">{item.teluguName}</p>
-              </div>
-              <span className={`flex items-center text-xs font-bold px-2.5 py-1 rounded-xl ${
-                item.isUp ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"
-              }`}>
-                {item.isUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                {item.change > 0 ? `+${item.change}` : item.change} ₹
+          <div
+            key={item.id}
+            className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-base text-slate-800">{item.crop}</span>
+              <span
+                className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                  item.status === "up"
+                    ? "bg-emerald-100 text-emerald-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {item.change}
               </span>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-end justify-between">
-              <div>
-                <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
-                  <MapPin size={12} /> {item.mandi}
-                </p>
-                <p className="text-xs text-slate-500 mt-0.5">Per Quintal (క్వింటాల్)</p>
-              </div>
-              <p className="text-lg font-extrabold text-slate-800">₹ {item.pricePerQuintal.toLocaleString("en-IN")}</p>
+            <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+              <MapPin size={14} className="text-emerald-600" />
+              <span>{item.location}</span>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                <Tag size={13} /> ప్రస్తుత ధర
+              </span>
+              <span className="text-base font-extrabold text-emerald-900">{item.price}</span>
             </div>
           </div>
         ))}
