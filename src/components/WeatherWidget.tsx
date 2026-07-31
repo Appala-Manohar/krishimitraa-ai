@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Sun, Cloud, Rain, MapPin, Droplets, Wind } from "lucide-react";
+import { useState } from "react";
+import { Sun, MapPin, Droplets, Wind } from "lucide-react";
 
 export default function WeatherWidget() {
-  const [weather, setWeather] = useState({
+  const [weather] = useState({
     temp: "31°C",
     condition: "పాక్షికంగా మేఘావృతం",
     humidity: "68%",
