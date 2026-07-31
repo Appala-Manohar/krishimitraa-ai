@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Upload, Image as ImageIcon, Loader2, Volume2, VolumeX, Camera, RefreshCw } from "lucide-react";
 // @ts-ignore
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default function DiseaseDetection() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -16,8 +16,7 @@ export default function DiseaseDetection() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
-  const GEMINI_API_KEY =
-    import.meta.env.VITE_GEMINI_API_KEY || "";
+  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,7 +44,7 @@ export default function DiseaseDetection() {
       }
     } catch (err) {
       console.error("Camera access error:", err);
-      alert("కెమెరాను యాక్సెస్ చేయడం కుదరలేదు. దయచేసి అనుమతులు తనిఖీ చేయండి.");
+      alert("కెమెరాను యాక్సెస్ చేయడం కుదరలేదు.");
       setIsCameraOpen(false);
     }
   };
@@ -83,35 +82,29 @@ export default function DiseaseDetection() {
 
     try {
       // @ts-ignore
-      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-      const prompt = `నువ్వు ఒక వ్యవసాయ నిపుణుడివి. ఈ పంట లేదా ఆకు ఫోటోను పరిశీలించి కింద పేర్కొన్న వివరాలను తెలుగు భాషలో స్పష్టంగా మరియు సులభంగా అర్థమయ్యేలా విశ్లేషణ ఇవ్వండి:
-1. **పంట వ్యాధి పేరు / సమస్య** (పంట ఆరోగ్యంగా ఉంటే అది కూడా చెప్పండి)
-2. **ప్రధాన లక్షణాలు**
-3. **నివారణ చర్యలు / మందుల వివరాలు**
-4. **రైతుకు ముఖ్యమైన సలహాలు**`;
+      const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+      // @ts-ignore
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [
-          {
-            role: "user",
-            parts: [
-              { text: prompt },
-              {
-                inlineData: {
-                  data: base64Image,
-                  mimeType: mimeType,
-                },
-              },
-            ],
-          },
-        ],
-      });
+      const prompt = `నువ్వు ఒక వ్యవసాయ నిపుణుడివి. ఈ పంట లేదా ఆకు ఫోటోను పరిశీలించి కింద పేర్కొన్న వివరాలను తెలుగు భాషలో స్పష్టంగా చెప్పండి:
+1. పంట వ్యాధి పేరు / సమస్య
+2. ప్రధాన లక్షణాలు
+3. నివారణ చర్యలు / మందుల వివరాలు
+4. రైతుకు ముఖ్యమైన సలహాలు`;
 
-      setResult(response.text);
+      const imagePart = {
+        inlineData: {
+          data: base64Image,
+          mimeType: mimeType,
+        },
+      };
+
+      const res = await model.generateContent([prompt, imagePart]);
+      const text = await res.response.text();
+      setResult(text);
     } catch (error) {
       console.error("Analysis Error:", error);
-      setResult("విశ్లేషణలో లోపం జరిగింది. దయచేసి API Key ని సరిచూసుకోండి లేదా మళ్లీ ప్రయత్నించండి.");
+      setResult("విశ్లేషణలో లోపం జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.");
     } finally {
       setLoading(false);
     }
@@ -140,7 +133,6 @@ export default function DiseaseDetection() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-md p-6 border border-emerald-100 space-y-6">
-        {/* Upload & Camera Controls */}
         {!isCameraOpen ? (
           <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
             <label className="flex-1 w-full flex flex-col items-center justify-center h-48 border-2 border-dashed border-emerald-300 rounded-xl cursor-pointer bg-emerald-50/50 hover:bg-emerald-50 transition">
@@ -181,7 +173,6 @@ export default function DiseaseDetection() {
           </div>
         )}
 
-        {/* Selected Image Preview */}
         {selectedImage && !isCameraOpen && (
           <div className="flex flex-col items-center space-y-4 pt-4 border-t">
             <div className="relative w-full max-w-xs rounded-xl overflow-hidden border-2 border-emerald-500 shadow-md">
@@ -207,7 +198,6 @@ export default function DiseaseDetection() {
         )}
       </div>
 
-      {/* Analysis Result Display */}
       {result && (
         <div className="bg-white rounded-2xl shadow-lg p-6 border border-emerald-200 space-y-4">
           <div className="flex justify-between items-center border-b pb-3">
@@ -217,7 +207,6 @@ export default function DiseaseDetection() {
             <button
               onClick={toggleSpeech}
               className="p-2.5 bg-emerald-100 text-emerald-800 rounded-full hover:bg-emerald-200 transition"
-              title="వాయిస్ ద్వారా విను"
             >
               {isSpeaking ? <VolumeX className="w-5 h-5 text-red-600" /> : <Volume2 className="w-5 h-5" />}
             </button>
