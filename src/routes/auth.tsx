@@ -213,5 +213,5 @@ function AuthComponent() {
   );
 }
 
-// Added Default Export to fix Vercel App.tsx build issue
+// Added Default Export for App.tsx compatibility
 export default AuthComponent;
