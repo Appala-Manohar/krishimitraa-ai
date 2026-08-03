@@ -24,7 +24,6 @@ function AuthComponent() {
     const endpoint = isLogin ? '/api/login' : '/api/register';
 
     try {
-      // Fire API Call to Render Backend (Will show in Network Tab)
       await fetch(`${backendUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -33,7 +32,6 @@ function AuthComponent() {
     } catch (err) {
       console.error('Backend connection notice:', err);
     } finally {
-      // Direct Forced Location Switch (Bypasses any router blockage)
       window.location.href = '/dashboard';
     }
   };
@@ -214,3 +212,6 @@ function AuthComponent() {
     </div>
   );
 }
+
+// Added Default Export to fix Vercel App.tsx build issue
+export default AuthComponent;
