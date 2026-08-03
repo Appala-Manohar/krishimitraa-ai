@@ -1,38 +1,80 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Lock, User, Moon, Sun, ShieldCheck, Loader2 } from 'lucide-react';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
+import { Lock, User, Moon, Sun, ShieldCheck, Loader2, Phone, Sparkles } from 'lucide-react';
 
-export default function Auth() {
+export const Route = createFileRoute('/auth' as any)({
+  component: AuthComponent,
+});
+
+function AuthComponent() {
+  const [isLogin, setIsLogin] = useState(true);
   const [lang, setLang] = useState<'te' | 'en'>('te');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // Form State Fields
   const [farmerName, setFarmerName] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const [successMsg, setSuccessMsg] = useState('');
+
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // Authentication Submission Handler
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccessMsg('');
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://krishimitraa-ai.onrender.com';
+    const endpoint = isLogin ? '/api/login' : '/api/register';
 
     try {
-      // Direct API Call to Render Backend
-      const response = await fetch(`${backendUrl}/api/login`, {
+      // Direct API Trigger to Render Backend
+      const response = await fetch(`${backendUrl}${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ farmerName, password }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(
+          isLogin 
+            ? { farmerName, password } 
+            : { farmerName, password, phone }
+        ),
       });
 
-      // Navigate to dashboard after login trigger
-      navigate('/dashboard');
+      const data = await response.json().catch(() => null);
+
+      if (response.ok) {
+        if (data?.token) {
+          localStorage.setItem('krishimitra_token', data.token);
+        }
+        if (data?.user) {
+          localStorage.setItem('krishimitra_user', JSON.stringify(data.user));
+        }
+
+        if (!isLogin) {
+          setSuccessMsg(lang === 'te' ? 'రిజిస్ట్రేషన్ పూర్తయింది! లాగిన్ అవ్వండి.' : 'Registration successful! Please log in.');
+          setIsLogin(true);
+          setLoading(false);
+          return;
+        }
+
+        // Navigate to Dashboard on successful login
+        navigate({ to: '/dashboard' });
+      } else {
+        // Fallback demo redirect if backend responds with non-200 or user not in DB
+        console.warn('Backend response warning:', data?.message || response.statusText);
+        localStorage.setItem('krishimitra_user', JSON.stringify({ name: farmerName || 'Manohar' }));
+        navigate({ to: '/dashboard' });
+      }
     } catch (err) {
       console.error('Backend connection error:', err);
-      // Fallback navigation so UI never hangs
-      navigate('/dashboard');
+      // Demo Guarantee: Proceed to dashboard even during backend sleep mode
+      localStorage.setItem('krishimitra_user', JSON.stringify({ name: farmerName || 'Manohar' }));
+      navigate({ to: '/dashboard' });
     } finally {
       setLoading(false);
     }
@@ -41,28 +83,33 @@ export default function Auth() {
   return (
     <div className={`min-h-screen w-full flex items-center justify-center p-4 lg:p-8 transition-colors duration-300 ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-800'}`}>
       
-      {/* Outer Main Container */}
+      {/* Container Box */}
       <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
         
-        {/* Left Hero Panel */}
-        <div className="lg:col-span-5 relative hidden lg:flex flex-col justify-between p-8 bg-cover bg-center text-white overflow-hidden" 
-             style={{ backgroundImage: `linear-gradient(to bottom, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.8)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1000&auto=format&fit=crop')` }}>
-          
-          <div className="flex items-center gap-2">
-            <div className="bg-emerald-600 p-2 rounded-xl text-white shadow-lg">
+        {/* Left Side Hero & Branding Panel (5 Cols) */}
+        <div 
+          className="lg:col-span-5 relative hidden lg:flex flex-col justify-between p-8 bg-cover bg-center text-white overflow-hidden" 
+          style={{ backgroundImage: `linear-gradient(to bottom, rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.85)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1000&auto=format&fit=crop')` }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="bg-emerald-600 p-2.5 rounded-2xl text-white shadow-lg">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <span className="text-xl font-bold tracking-wide">KrishiMitra AI</span>
+            <span className="text-2xl font-bold tracking-wide">KrishiMitra AI</span>
           </div>
 
-          <div className="space-y-3 mb-6">
+          <div className="space-y-4 mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-semibold backdrop-blur-md">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{lang === 'te' ? 'కృత్రిమ మేధస్సు తో నడిచే వ్యవసాయం' : 'Next-Gen Smart Farming'}</span>
+            </div>
             <h1 className="text-3xl font-extrabold leading-tight drop-shadow-md">
-              {lang === 'te' ? 'రైతు సేవలో AI విప్లవం' : 'AI-Powered Smart Farming'}
+              {lang === 'te' ? 'రైతు సేవలో AI విప్లవం' : 'AI-Powered Crop & Land Diagnostics'}
             </h1>
             <p className="text-slate-200 text-sm leading-relaxed drop-shadow">
               {lang === 'te' 
-                ? 'పంట వ్యాధుల గుర్తింపు, వాతావరణ సమాచారం మరియు మార్కెట్ ధరలు ఒకే చోట.' 
-                : 'Crop disease detection, weather forecasts, and market insights all in one place.'}
+                ? 'పంట వ్యాధుల తక్షణ గుర్తింపు, వాతావరణ హెచ్చరికలు మరియు మార్కెట్ ధరలను ఎప్పటికప్పుడు తెలుసుకోండి.' 
+                : 'Instant crop disease identification, real-time weather alerts, and smart market price updates.'}
             </p>
           </div>
 
@@ -72,22 +119,22 @@ export default function Auth() {
           </div>
         </div>
 
-        {/* Right Form Panel */}
+        {/* Right Side Form Panel (7 Cols) */}
         <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between bg-white dark:bg-slate-800">
           
-          {/* Controls: Language & Theme */}
+          {/* Top Control Bar: Language & Theme Switcher */}
           <div className="flex items-center justify-end gap-3 mb-6">
             <div className="flex items-center bg-slate-100 dark:bg-slate-700 p-1 rounded-full border border-slate-200 dark:border-slate-600">
               <button 
                 type="button"
                 onClick={() => setLang('te')} 
-                className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${lang === 'te' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300'}`}>
+                className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${lang === 'te' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-emerald-600'}`}>
                 తెలుగు
               </button>
               <button 
                 type="button"
                 onClick={() => setLang('en')} 
-                className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${lang === 'en' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300'}`}>
+                className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${lang === 'en' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-emerald-600'}`}>
                 Eng
               </button>
             </div>
@@ -95,29 +142,59 @@ export default function Auth() {
             <button 
               type="button"
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition">
+              className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">
               {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
             </button>
           </div>
 
-          {/* Form Header */}
+          {/* Mode Switcher Tabs (Login / Register) */}
+          <div className="flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl mb-6 border border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => { setIsLogin(true); setError(''); setSuccessMsg(''); }}
+              className={`flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all ${isLogin ? 'bg-emerald-700 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'}`}
+            >
+              {lang === 'te' ? 'లాగిన్ (Log In)' : 'Log In'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsLogin(false); setError(''); setSuccessMsg(''); }}
+              className={`flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all ${!isLogin ? 'bg-emerald-700 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'}`}
+            >
+              {lang === 'te' ? 'కొత్త ఖాతా (Register)' : 'Register'}
+            </button>
+          </div>
+
+          {/* Form Title & Subtitle */}
           <div className="mb-6">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mb-1">
-              {lang === 'te' ? 'రైతు ఖాతాలోకి ప్రవేశించండి' : 'Welcome Back'}
+              {isLogin 
+                ? (lang === 'te' ? 'రైతు ఖాతాలోకి ప్రవేశించండి' : 'Welcome Back')
+                : (lang === 'te' ? 'కొత్త రైతు ఖాతాని సృష్టించండి' : 'Create Farmer Account')}
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-sm">
-              {lang === 'te' ? 'మీ పేరు మరియు పాస్‌వర్డ్‌తో లాగిన్ అవ్వండి' : 'Enter your credentials to access your dashboard'}
+              {isLogin 
+                ? (lang === 'te' ? 'మీ పేరు మరియు పాస్‌వర్డ్‌తో లాగిన్ అవ్వండి' : 'Enter your credentials to access your dashboard')
+                : (lang === 'te' ? 'వివరాలను నమోదు చేసి మీ ఖాతాను ప్రారంభించండి' : 'Fill in your details to register as a farmer')}
             </p>
           </div>
 
+          {/* Error and Success Notifications */}
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-xs font-medium">
+            <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-medium">
               {error}
             </div>
           )}
+          {successMsg && (
+            <div className="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
+              {successMsg}
+            </div>
+          )}
 
-          {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-4">
+          {/* Dynamic Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Farmer Name Input */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                 {lang === 'te' ? 'రైతు పేరు (Farmer Name)' : 'Farmer Name'}
@@ -135,6 +212,27 @@ export default function Auth() {
               </div>
             </div>
 
+            {/* Registration Additional Field: Phone Number */}
+            {!isLogin && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  {lang === 'te' ? 'ఫోన్ నంబర్ (Phone Number)' : 'Phone Number'}
+                </label>
+                <div className="relative">
+                  <Phone className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. 9876543210"
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:text-white text-sm outline-none transition"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Password Input */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                 {lang === 'te' ? 'పాస్‌వర్డ్ (Password)' : 'Password'}
@@ -152,24 +250,30 @@ export default function Auth() {
               </div>
             </div>
 
+            {/* Form Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/25 transition active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 text-sm"
+              className="w-full mt-2 py-3.5 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-lg shadow-emerald-700/25 transition active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 text-sm"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>{lang === 'te' ? 'లాగిన్ అవుతోంది...' : 'Logging in...'}</span>
+                  <span>{lang === 'te' ? 'ప్రాసెస్ అవుతోంది...' : 'Processing...'}</span>
                 </>
               ) : (
-                <span>{lang === 'te' ? 'లాగిన్ అవ్వండి (Log In)' : 'Log In'}</span>
+                <span>
+                  {isLogin 
+                    ? (lang === 'te' ? 'లాగిన్ అవ్వండి (Log In)' : 'Log In')
+                    : (lang === 'te' ? 'రిజిస్టర్ అవ్వండి (Register)' : 'Register')}
+                </span>
               )}
             </button>
           </form>
 
+          {/* Footer Subtext */}
           <p className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">
-            {lang === 'te' ? 'కృషిమిత్ర AI - రైతుల కోసం రూపొందించబడింది' : 'KrishiMitra AI - Built for Farmers'}
+            {lang === 'te' ? 'కృషిమిత్ర AI - రైతుల సేవలో సదా ముందంజలో' : 'KrishiMitra AI - Empowering Agriculture Worldwide'}
           </p>
 
         </div>
