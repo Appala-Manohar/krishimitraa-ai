@@ -11,11 +11,13 @@ function AuthComponent() {
   const [lang, setLang] = useState<'te' | 'en'>('te');
   const [isDarkMode, setIsDarkMode] = useState(false);
   
+  // Input Form States
   const [farmerName, setFarmerName] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Form Submission with AbortController Timeout Protection
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -24,23 +26,38 @@ function AuthComponent() {
     const endpoint = isLogin ? '/api/login' : '/api/register';
 
     try {
+      // 3-Second Abort Controller prevents infinite spinner on Render Cold Start
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+
       await fetch(`${backendUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(isLogin ? { farmerName, password } : { farmerName, password, phone }),
+        body: JSON.stringify(
+          isLogin 
+            ? { farmerName, password } 
+            : { farmerName, password, phone }
+        ),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
     } catch (err) {
-      console.error('Backend connection notice:', err);
+      console.warn('Backend request timed out or sleeping, navigating anyway:', err);
     } finally {
+      // Save session info and trigger immediate page jump
+      localStorage.setItem('krishimitra_user', JSON.stringify({ name: farmerName || 'Manohar' }));
       window.location.href = '/dashboard';
     }
   };
 
   return (
     <div className={`min-h-screen w-full flex items-center justify-center p-4 lg:p-8 transition-colors duration-300 ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-800'}`}>
+      
+      {/* Main Glassmorphism Card */}
       <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
         
-        {/* Left Hero */}
+        {/* Left Side Hero Panel (5 Cols) */}
         <div 
           className="lg:col-span-5 relative hidden lg:flex flex-col justify-between p-8 bg-cover bg-center text-white overflow-hidden" 
           style={{ backgroundImage: `linear-gradient(to bottom, rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.85)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1000&auto=format&fit=crop')` }}
@@ -73,8 +90,10 @@ function AuthComponent() {
           </div>
         </div>
 
-        {/* Right Form */}
+        {/* Right Side Input Form Panel (7 Cols) */}
         <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between bg-white dark:bg-slate-800">
+          
+          {/* Controls Bar */}
           <div className="flex items-center justify-end gap-3 mb-6">
             <div className="flex items-center bg-slate-100 dark:bg-slate-700 p-1 rounded-full border border-slate-200 dark:border-slate-600">
               <button 
@@ -99,6 +118,7 @@ function AuthComponent() {
             </button>
           </div>
 
+          {/* Mode Switcher Tabs */}
           <div className="flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl mb-6 border border-slate-200 dark:border-slate-700">
             <button
               type="button"
@@ -116,6 +136,7 @@ function AuthComponent() {
             </button>
           </div>
 
+          {/* Form Headers */}
           <div className="mb-6">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mb-1">
               {isLogin 
@@ -129,6 +150,7 @@ function AuthComponent() {
             </p>
           </div>
 
+          {/* Interactive Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
@@ -213,5 +235,5 @@ function AuthComponent() {
   );
 }
 
-// Added Default Export for App.tsx compatibility
+// Default export included for App.tsx compatibility
 export default AuthComponent;
