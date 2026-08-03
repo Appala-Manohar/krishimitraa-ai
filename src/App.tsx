@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import AuthComponent from './routes/auth';
 import { 
   ShieldCheck, LayoutDashboard, Stethoscope, SunMedium, 
   TrendingUp, MessageSquareText, LogOut, Moon, Sun, 
-  Menu, X, Sparkles, AlertTriangle, Upload, CheckCircle2 
+  Menu, X, Sparkles, Upload 
 } from 'lucide-react';
 
 export default function App() {
@@ -13,7 +13,7 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
-  // Check Authentication status on load & location change
+  // Check Authentication status on load
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem('token') || localStorage.getItem('krishimitra_token');
@@ -120,10 +120,10 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         
-        {/* Top Header */}
+        {/* Header */}
         <header className={`flex items-center justify-between px-6 py-4 border-b ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} shadow-sm`}>
           <div className="flex items-center gap-3">
             <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 text-slate-600 dark:text-slate-300">
@@ -140,10 +140,10 @@ export default function App() {
           </button>
         </header>
 
-        {/* Dynamic Interactive Body Tabs */}
+        {/* Active Tabs */}
         <main className="flex-1 p-6 overflow-y-auto">
           
-          {/* TAB 1: DASHBOARD OVERVIEW */}
+          {/* DASHBOARD */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 sm:p-8 rounded-3xl shadow-lg relative overflow-hidden">
@@ -156,7 +156,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Quick Actions Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div onClick={() => setActiveTab('disease')} className={`p-5 rounded-2xl border cursor-pointer hover:shadow-md transition ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
                   <div className="p-3 bg-emerald-100 text-emerald-700 w-fit rounded-xl mb-3"><Stethoscope className="w-6 h-6" /></div>
@@ -185,7 +184,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 2: CROP DISEASE DIAGNOSTICS */}
+          {/* DISEASE */}
           {activeTab === 'disease' && (
             <div className="max-w-3xl mx-auto space-y-6">
               <div className={`p-6 sm:p-8 rounded-3xl border shadow-sm ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
@@ -201,7 +200,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 3: WEATHER FORECAST */}
+          {/* WEATHER */}
           {activeTab === 'weather' && (
             <div className="max-w-4xl mx-auto space-y-6">
               <div className={`p-6 rounded-3xl border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
@@ -224,7 +223,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 4: MARKET PRICES */}
+          {/* MARKET */}
           {activeTab === 'market' && (
             <div className="max-w-4xl mx-auto space-y-6">
               <div className={`p-6 rounded-3xl border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
@@ -239,7 +238,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 5: AI CHAT ASSISTANT */}
+          {/* CHAT */}
           {activeTab === 'chat' && (
             <div className="max-w-3xl mx-auto h-[75vh] flex flex-col rounded-3xl border overflow-hidden bg-white dark:bg-slate-800 dark:border-slate-700 shadow-sm">
               <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-emerald-900 text-white flex items-center gap-3">
