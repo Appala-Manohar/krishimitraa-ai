@@ -1,14 +1,21 @@
 import React from 'react';
-import { RouterProvider, createRouter, createRoute, createRootRoute, Outlet, redirect } from '@tanstack/react-router';
-import AuthComponent from './routes/auth';
+import { 
+  RouterProvider, 
+  createRouter, 
+  createRoute, 
+  createRootRoute, 
+  Outlet, 
+  redirect 
+} from '@tanstack/react-router';
 
-// Importing your REAL Original Project Dashboard Component
+// Component Imports
+import AuthComponent from './routes/auth';
 import DashboardComponent from './routes/_authenticated/dashboard';
 
-// 1. Root Layout
+// 1. Root Parent Route
 const rootRoute = createRootRoute({
   component: () => (
-    <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans antialiased">
       <Outlet />
     </div>
   ),
@@ -21,27 +28,30 @@ const authRoute = createRoute({
   component: AuthComponent,
 });
 
-// 3. Index Route -> Redirects to /auth if not logged in
+// 3. Index Redirect Route
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   beforeLoad: () => {
     const token = localStorage.getItem('token') || localStorage.getItem('krishimitra_token');
-    if (!token) {
-      throw redirect({ to: '/auth' });
-    } else {
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+    if (token || isAuthenticated) {
       throw redirect({ to: '/dashboard' });
+    } else {
+      throw redirect({ to: '/auth' });
     }
   },
 });
 
-// 4. Authenticated Dashboard Route (Renders your REAL Dashboard Features)
+// 4. Authenticated Dashboard Route
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dashboard',
   beforeLoad: () => {
     const token = localStorage.getItem('token') || localStorage.getItem('krishimitra_token');
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
     if (!token && !isAuthenticated) {
       throw redirect({ to: '/auth' });
     }
@@ -49,9 +59,18 @@ const dashboardRoute = createRoute({
   component: DashboardComponent,
 });
 
-// Build Router Tree
-const routeTree = rootRoute.addChildren([indexRoute, authRoute, dashboardRoute]);
-const router = createRouter({ routeTree });
+// Route Tree Schema
+const routeTree = rootRoute.addChildren([
+  indexRoute, 
+  authRoute, 
+  dashboardRoute
+]);
+
+// Create Router Instance
+const router = createRouter({ 
+  routeTree,
+  defaultPreload: 'intent',
+});
 
 declare module '@tanstack/react-router' {
   interface Register {
@@ -59,6 +78,11 @@ declare module '@tanstack/react-router' {
   }
 }
 
+// Main App Component
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <React.StrictMode>
+      <RouterProvider router={router} />
+    </React.StrictMode>
+  );
 }
