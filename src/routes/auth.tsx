@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Lock, User, Moon, Sun, ShieldCheck, Loader2, Phone, Sparkles } from 'lucide-react';
 
@@ -17,7 +17,9 @@ function AuthComponent() {
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Form Submission with AbortController Timeout Protection
+  const navigate = useNavigate();
+
+  // Form Submission with TanStack Router Native Navigation
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -26,9 +28,9 @@ function AuthComponent() {
     const endpoint = isLogin ? '/api/login' : '/api/register';
 
     try {
-      // 3-Second Abort Controller prevents infinite spinner on Render Cold Start
+      // 2-second timeout so network call doesn't block router navigation
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
 
       await fetch(`${backendUrl}${endpoint}`, {
         method: 'POST',
@@ -43,18 +45,26 @@ function AuthComponent() {
 
       clearTimeout(timeoutId);
     } catch (err) {
-      console.warn('Backend request timed out or sleeping, navigating anyway:', err);
+      console.warn('Backend cold start / error, proceeding with router navigation:', err);
     } finally {
-      // Save session info and trigger immediate page jump
+      // Set local storage session
       localStorage.setItem('krishimitra_user', JSON.stringify({ name: farmerName || 'Manohar' }));
-      window.location.href = '/dashboard';
+      
+      // Native Router Navigation to bypass window location hang
+      setLoading(false);
+      try {
+        navigate({ to: '/dashboard' });
+      } catch (e) {
+        // Fallback for nested authenticated routes
+        window.location.replace('/dashboard');
+      }
     }
   };
 
   return (
     <div className={`min-h-screen w-full flex items-center justify-center p-4 lg:p-8 transition-colors duration-300 ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-800'}`}>
       
-      {/* Main Glassmorphism Card */}
+      {/* Main Container */}
       <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
         
         {/* Left Side Hero Panel (5 Cols) */}
@@ -150,7 +160,7 @@ function AuthComponent() {
             </p>
           </div>
 
-          {/* Interactive Form */}
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
@@ -181,7 +191,7 @@ function AuthComponent() {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. 9876543210"
+                    placeholder="e.g. 8328472024"
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm outline-none transition"
                   />
                 </div>
@@ -235,5 +245,4 @@ function AuthComponent() {
   );
 }
 
-// Default export included for App.tsx compatibility
 export default AuthComponent;
